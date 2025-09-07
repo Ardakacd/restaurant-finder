@@ -1,37 +1,315 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Restaurant Finder - Git Ignore File
 
-# dependencies
-node_modules/
+# ===========================
+# MOBILE APP (React Native + Expo)
+# ===========================
 
 # Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
 
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
+# Node modules
+mobile/node_modules/
+mobile/npm-debug.log*
+mobile/yarn-debug.log*
+mobile/yarn-error.log*
 
-# Metro
-.metro-health-check*
+# React Native
+mobile/android/
+mobile/ios/
+mobile/.expo-shared/
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+# Metro bundler cache
+mobile/.metro-cache/
+mobile/metro-cache/
 
-# macOS
+# TypeScript
+mobile/*.tsbuildinfo
+
+# IDE and Editor files
+mobile/.vscode/
+mobile/.idea/
+mobile/*.swp
+mobile/*.swo
+
+# OS generated files
+mobile/.DS_Store
+mobile/.DS_Store?
+mobile/._*
+mobile/.Spotlight-V100
+mobile/.Trashes
+mobile/ehthumbs.db
+mobile/Thumbs.db
+
+# Logs
+mobile/logs
+mobile/*.log
+
+# Runtime data
+mobile/pids
+mobile/*.pid
+mobile/*.seed
+mobile/*.pid.lock
+
+# Coverage directory used by tools like istanbul
+mobile/coverage/
+mobile/.nyc_output
+
+# Grunt intermediate storage
+mobile/.grunt
+
+# Bower dependency directory
+mobile/bower_components
+
+# node-waf configuration
+mobile/.lock-wscript
+
+# Compiled binary addons
+mobile/build/Release
+
+# Dependency directories
+mobile/jspm_packages/
+
+# Optional npm cache directory
+mobile/.npm
+
+# Optional eslint cache
+mobile/.eslintcache
+
+# Optional REPL history
+mobile/.node_repl_history
+
+# Output of 'npm pack'
+mobile/*.tgz
+
+# Yarn Integrity file
+mobile/.yarn-integrity
+
+# ===========================
+# BACKEND (FastAPI + Python)
+# ===========================
+
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+*.py[cod]
+*$py.class
+__pycache__/
+
+# C extensions
+backend/*.so
+
+# Distribution / packaging
+backend/.Python
+backend/build/
+backend/develop-eggs/
+backend/dist/
+backend/downloads/
+backend/eggs/
+backend/.eggs/
+backend/lib/
+backend/lib64/
+backend/parts/
+backend/sdist/
+backend/var/
+backend/wheels/
+backend/share/python-wheels/
+backend/*.egg-info/
+backend/.installed.cfg
+backend/*.egg
+backend/MANIFEST
+
+# PyInstaller
+backend/*.manifest
+backend/*.spec
+
+# Installer logs
+backend/pip-log.txt
+backend/pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+backend/htmlcov/
+backend/.tox/
+backend/.nox/
+backend/.coverage
+backend/.coverage.*
+backend/.cache
+backend/nosetests.xml
+backend/coverage.xml
+backend/*.cover
+backend/*.py,cover
+backend/.hypothesis/
+backend/.pytest_cache/
+backend/cover/
+
+# Translations
+backend/*.mo
+backend/*.pot
+
+# Django stuff (if applicable)
+backend/*.log
+backend/local_settings.py
+backend/db.sqlite3
+backend/db.sqlite3-journal
+
+# Flask stuff (if applicable)
+backend/instance/
+backend/.webassets-cache
+
+# Scrapy stuff (if applicable)
+backend/.scrapy
+
+# Sphinx documentation
+backend/docs/_build/
+
+# PyBuilder
+backend/.pybuilder/
+backend/target/
+
+# Jupyter Notebook
+backend/.ipynb_checkpoints
+
+# IPython
+backend/profile_default/
+backend/ipython_config.py
+
+# pyenv
+backend/.python-version
+
+# pipenv
+backend/Pipfile.lock
+
+# poetry
+backend/poetry.lock
+
+# pdm
+backend/.pdm.toml
+
+# PEP 582
+backend/__pypackages__/
+
+# Celery stuff
+backend/celerybeat-schedule
+backend/celerybeat.pid
+
+# SageMath parsed files
+backend/*.sage.py
+
+# Environments
+backend/.env
+backend/.venv
+backend/env/
+backend/venv/
+backend/ENV/
+backend/env.bak/
+backend/venv.bak/
+
+# Spyder project settings
+backend/.spyderproject
+backend/.spyproject
+
+# Rope project settings
+backend/.ropeproject
+
+# mkdocs documentation
+backend/site/
+
+# mypy
+backend/.mypy_cache/
+backend/.dmypy.json
+backend/dmypy.json
+
+# Pyre type checker
+backend/.pyre/
+
+# pytype static type analyzer
+backend/.pytype/
+
+# Cython debug symbols
+backend/cython_debug/
+
+# PyCharm
+backend/.idea/
+
+# Database files
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+
+# ===========================
+# GENERAL PROJECT FILES
+# ===========================
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
 .DS_Store
-*.pem
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# local env files
-.env*.local
+# Temporary files
+*.tmp
+*.temp
 
-# typescript
-*.tsbuildinfo
+# Log files
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# ===========================
+# CUSTOM PROJECT IGNORES
+# ===========================
+
+# Local development files
+local_config.py
+local_settings.py
+dev_notes.md
+TODO.md
+
+# Test data
+test_data/
+sample_data/
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Deployment files
+deploy/
+deployment/
+docker-compose.override.yml
+
+# API Keys and Secrets (extra safety)
+**/secrets/
+**/keys/
+**/*key*
+**/*secret*
+**/*token*
+
+# Database dumps
+*.sql
+*.dump
