@@ -197,6 +197,9 @@ backend/*.sage.py
 
 # Environments
 backend/.env
+backend/.env.development
+backend/.env.staging
+backend/.env.production
 backend/.venv
 backend/env/
 backend/venv/
