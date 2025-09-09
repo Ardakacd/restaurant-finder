@@ -1,0 +1,161 @@
+from typing import List
+import logging
+from .models import Place
+from fastapi import HTTPException
+import httpx
+import json
+from config import settings
+
+logger = logging.getLogger(__name__)
+
+
+class SearchAdapter:
+    
+    async def search(self, query: str, fields: dict) -> List[Place]:
+        try:
+            URL = "https://places.googleapis.com/v1/places:searchText"
+
+            HEADERS = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
+                "X-Goog-FieldMask": "places.internationalPhoneNumber,places.formattedAddress,places.rating,places.googleMapsUri,places.businessStatus,places.priceLevel,places.displayName,places.currentOpeningHours,places.primaryType,places.priceRange,places.outdoorSeating,places.liveMusic,places.menuForChildren,places.servesCocktails,places.servesDessert,places.servesCoffee,places.goodForChildren,places.restroom,places.goodForGroups,places.goodForWatchingSports,places.paymentOptions,places.accessibilityOptions,places.delivery,places.dineIn,places.reservable,places.servesBreakfast,places.servesLunch,places.servesDinner,places.servesBeer,places.servesWine,places.servesBrunch"
+            }
+
+            payload = {
+                "textQuery": query
+            }
+
+            with httpx.Client() as client:
+                response = client.post(URL, headers=HEADERS, json=payload)
+                data = response.json()
+                data = data['places']
+                
+                filtered_data = self._filter_places(data, fields)
+                
+                return filtered_data
+
+        except HTTPException as e:
+            raise
+        except Exception as e:
+            print(e)
+            return []
+    
+    def _filter_places(self, places: List[dict], fields: dict) -> List[dict]:
+        """
+        Filter places based on fields criteria.
+        Only apply filtering for keys present in fields.
+        If a key is not in fields, all values are acceptable.
+        """
+        if not fields:
+            return places
+        
+        filtered_places = []
+        
+        for place in places:
+            matches_criteria = True
+            
+            for field_key, field_value in fields.items():
+                if not self._matches_field_criteria(place, field_key, field_value):
+                    matches_criteria = False
+                    break
+            
+            if matches_criteria:
+                filtered_places.append(place)
+        
+        return filtered_places
+    
+    def _matches_field_criteria(self, place: dict, field_key: str, field_value) -> bool:
+        """
+        Check if a place matches the criteria for a specific field.
+        Handles complex fields like rating, currentOpeningHours, priceRange, etc.
+        """
+        if field_key == "rating":
+            place_rating = place.get("rating")
+            if place_rating is None:
+                return False
+            
+            if isinstance(field_value, dict):
+                if "min" in field_value and place_rating < field_value["min"]:
+                    return False
+                if "max" in field_value and place_rating > field_value["max"]:
+                    return False
+                return True
+            else:
+                return place_rating >= field_value
+        
+        elif field_key == "currentOpeningHours":
+            if isinstance(field_value, dict) and "openNow" in field_value:
+                opening_hours = place.get("currentOpeningHours", {})
+                place_open_now = opening_hours.get("openNow", False)
+                return place_open_now == field_value["openNow"]
+            return True
+        
+        elif field_key == "priceRange":
+            if isinstance(field_value, dict):
+                place_price_range = place.get("priceRange", {})
+                
+                place_start_data = place_price_range.get("startPrice", {})
+                place_end_data = place_price_range.get("endPrice", {})
+                
+                if not place_start_data or not place_end_data:
+                    return True
+                
+                try:
+                    place_start_price = float(place_start_data.get("units", 0))
+                    place_end_price = float(place_end_data.get("units", 0))
+                    
+                    user_start_price = None
+                    user_end_price = None
+                    
+                    if "startPrice" in field_value:
+                        user_start_price = float(field_value["startPrice"]["units"])
+                    if "endPrice" in field_value:
+                        user_end_price = float(field_value["endPrice"]["units"])
+                    
+                    
+                    if user_end_price is not None and user_start_price is None:
+                        return place_start_price <= user_end_price
+                    
+                    
+                    elif user_start_price is not None and user_end_price is None:
+                        return place_end_price >= user_start_price
+                    
+                    elif user_start_price is not None and user_end_price is not None:
+                        return place_start_price <= user_end_price and user_start_price <= place_end_price
+                    
+                    return True
+                    
+                except (ValueError, TypeError):
+                    return True
+                
+            return True
+        
+        elif field_key == "paymentOptions":
+            if isinstance(field_value, dict):
+                place_payment_options = place.get("paymentOptions", {})
+                for payment_key, payment_value in field_value.items():
+                    place_payment_value = place_payment_options.get(payment_key)
+                    if place_payment_value != payment_value:
+                        return False
+                return True
+            return True
+        
+        elif field_key == "accessibilityOptions":
+            if isinstance(field_value, dict):
+                place_accessibility = place.get("accessibilityOptions", {})
+                for access_key, access_value in field_value.items():
+                    place_access_value = place_accessibility.get(access_key)
+                    if place_access_value != access_value:
+                        return False
+                return True
+            return True
+        
+        else:
+            place_value = place.get(field_key)
+            
+            if isinstance(field_value, list):
+                return place_value in field_value
+            else:
+                return place_value == field_value
+    
+   
