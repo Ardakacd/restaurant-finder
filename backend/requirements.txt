@@ -4,9 +4,17 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 sqlalchemy==2.0.23
+sqlalchemy_utils==0.41.2
 alembic==1.12.1
 psycopg2-binary==2.9.7
 python-dotenv==1.0.0
 pydantic==2.5.0
+pydantic[email]==2.5.0
+pydantic-settings==2.0.2
 httpx==0.25.2
 openai==1.106.1
+asyncpg==0.29.0
+bcrypt==4.3.0
+PyJWT==2.8.0
+python-jose[cryptography]==3.3.0
+greenlet==3.2.3
