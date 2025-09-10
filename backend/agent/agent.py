@@ -17,7 +17,7 @@ class Agent:
 
         response = json.loads(response.choices[0].message.content)
         
-        if 'searchQuery' in response and 'fields' in response:
+        if 'fields' in response:
             return response
         else:
             return None
