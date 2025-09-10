@@ -1,9 +1,8 @@
-from typing import List
+from typing import List, Optional
 import logging
-from .models import Place
+from .models import CafeResponse, PriceRange, OpeningHours, PriceDetail
 from fastapi import HTTPException
 import httpx
-import json
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -11,14 +10,14 @@ logger = logging.getLogger(__name__)
 
 class SearchAdapter:
     
-    async def search(self, query: str, fields: dict) -> List[Place]:
+    async def search(self, query: str, fields: dict) -> List[CafeResponse]:
         try:
             URL = "https://places.googleapis.com/v1/places:searchText"
 
             HEADERS = {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
-                "X-Goog-FieldMask": "places.internationalPhoneNumber,places.formattedAddress,places.rating,places.googleMapsUri,places.businessStatus,places.priceLevel,places.displayName,places.currentOpeningHours,places.primaryType,places.priceRange,places.outdoorSeating,places.liveMusic,places.menuForChildren,places.servesCocktails,places.servesDessert,places.servesCoffee,places.goodForChildren,places.restroom,places.goodForGroups,places.goodForWatchingSports,places.paymentOptions,places.accessibilityOptions,places.delivery,places.dineIn,places.reservable,places.servesBreakfast,places.servesLunch,places.servesDinner,places.servesBeer,places.servesWine,places.servesBrunch"
+                "X-Goog-FieldMask": "places.id,places.internationalPhoneNumber,places.formattedAddress,places.rating,places.googleMapsUri,places.businessStatus,places.priceLevel,places.displayName,places.currentOpeningHours,places.primaryType,places.priceRange,places.photos,places.allowsDogs,places.outdoorSeating,places.liveMusic,places.menuForChildren,places.servesCocktails,places.servesDessert,places.servesCoffee,places.goodForChildren,places.restroom,places.goodForGroups,places.goodForWatchingSports,places.paymentOptions,places.accessibilityOptions,places.delivery,places.dineIn,places.reservable,places.servesBreakfast,places.servesLunch,places.servesDinner,places.servesBeer,places.servesWine,places.servesBrunch,places.servesVegetarianFood"
             }
 
             payload = {
@@ -29,17 +28,28 @@ class SearchAdapter:
                 response = client.post(URL, headers=HEADERS, json=payload)
                 data = response.json()
                 data = data['places']
-                
+
                 filtered_data = self._filter_places(data, fields)
                 
-                return filtered_data
+                # Convert to CafeResponse objects
+                cafes = []
+                for place_data in filtered_data:
+                    try:
+                        cafe = self._convert_to_cafe_response(place_data)
+                        cafes.append(cafe)
+                    except Exception as e:
+                        logger.warning(f"Failed to convert place data to CafeResponse: {e}")
+                        continue
+                
+                return cafes
 
         except HTTPException as e:
             raise
         except Exception as e:
+            print('Error has occured')
             print(e)
             return []
-    
+
     def _filter_places(self, places: List[dict], fields: dict) -> List[dict]:
         """
         Filter places based on fields criteria.
@@ -158,4 +168,93 @@ class SearchAdapter:
             else:
                 return place_value == field_value
     
+    def _convert_to_cafe_response(self, place_data: dict) -> CafeResponse:
+        """
+        Convert Google Places API response to CafeResponse model with useful fields
+        """
+        place_id = place_data.get("id")
+        
+        display_name = place_data.get("displayName", {})
+        name = display_name.get("text") 
+        
+        return CafeResponse(
+            id=place_id,
+            name=name,
+            rating=place_data.get("rating"),
+            address=place_data.get("formattedAddress"),
+            phone=place_data.get("internationalPhoneNumber"),
+            google_maps_uri=place_data.get("googleMapsUri"),
+            business_status=place_data.get("businessStatus"),
+            primary_type=place_data.get("primaryType").replace("_", " "),
+            price_range=self._convert_price_range(place_data.get("priceRange")),
+            opening_hours=self._convert_opening_hours(place_data.get("currentOpeningHours")),
+            photos=self._convert_photos(place_data.get("photos")),
+            allows_dogs=place_data.get("allowsDogs"),
+            delivery=place_data.get("delivery"),
+            reservable=place_data.get("reservable"),
+            serves_breakfast=place_data.get("servesBreakfast"),
+            serves_lunch=place_data.get("servesLunch"),
+            serves_dinner=place_data.get("servesDinner"),
+            serves_vegetarian_food=place_data.get("servesVegetarianFood")
+        )
+     
+    def _convert_price_range(self, price_range_data) -> Optional[PriceRange]:
+        """Convert price range data to PriceRange model"""
+        if not price_range_data:
+            return None
+        
+        try:
+            
+            start_price = None
+            end_price = None
+            
+            if "startPrice" in price_range_data:
+                start_data = price_range_data["startPrice"]
+                start_price = PriceDetail(
+                    currencyCode=start_data.get("currencyCode", ""),
+                    units=start_data.get("units", "")
+                )
+            
+            if "endPrice" in price_range_data:
+                end_data = price_range_data["endPrice"]
+                end_price = PriceDetail(
+                    currencyCode=end_data.get("currencyCode", ""),
+                    units=end_data.get("units", "")
+                )
+            
+            return PriceRange(startPrice=start_price, endPrice=end_price)
+        except Exception:
+            return None
+    
+    def _convert_opening_hours(self, opening_hours_data) -> Optional[OpeningHours]:
+        """Convert opening hours data to OpeningHours model"""
+        if not opening_hours_data:
+            return None
+        
+        try:
+            return OpeningHours(
+                openNow=opening_hours_data.get("openNow"),
+                weekdayDescriptions=opening_hours_data.get("weekdayDescriptions"),
+            )
+        except Exception:
+            return None
+    
+    def _convert_photos(self, photos_data) -> Optional[List]:
+        """Convert photos data to Photo models list"""
+        if not photos_data or not isinstance(photos_data, list):
+            return None
+        
+        try:
+            
+            photos = []
+            for photo_data in photos_data:
+                if isinstance(photo_data, dict) and "name" in photo_data:
+                    name = photo_data.get("name")
+                    photo_url = f"https://places.googleapis.com/v1/{name}/media?key={settings.GOOGLE_API_KEY}&maxHeightPx=600&maxWidthPx=600"
+                    photos.append(photo_url)
+            print(photos)
+            
+            return photos if photos else None
+        except Exception:
+            return None
    

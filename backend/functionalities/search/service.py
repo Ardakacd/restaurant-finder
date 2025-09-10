@@ -1,7 +1,7 @@
 import logging
 from .adapter import SearchAdapter
 from fastapi import HTTPException, status
-from .models import Place
+from .models import CafeResponse
 from typing import List
 from agent.agent import Agent
 
@@ -11,7 +11,7 @@ class SearchService:
     def __init__(self, search_adapter: SearchAdapter):
         self.search_adapter = search_adapter
 
-    async def search(self, query: str) -> List[Place]:
+    async def search(self, query: str) -> List[CafeResponse]:
         
         try:
             agent = Agent()
@@ -21,7 +21,6 @@ class SearchService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Bir hata oluştu"
                 )
-            query = response['searchQuery']
             fields = response['fields']
                 
             logger.info(f"SearchService: Search attempt for query: {query}")

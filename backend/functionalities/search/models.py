@@ -2,6 +2,9 @@ from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel
 
+class SearchRequest(BaseModel):
+    query: str
+
 # Fields with limited values
 class BusinessStatus(str, Enum):
     OPERATIONAL = "OPERATIONAL"
@@ -58,10 +61,7 @@ class Period(BaseModel):
 
 class OpeningHours(BaseModel):
     openNow: Optional[bool] = None
-    periods: Optional[List[Period]] = None
     weekdayDescriptions: Optional[List[str]] = None
-    nextOpenTime: Optional[str] = None
-    nextCloseTime: Optional[str] = None
 
 class PriceDetail(BaseModel):
     currencyCode: str
@@ -83,7 +83,14 @@ class AccessibilityOptions(BaseModel):
     wheelchairAccessibleSeating: Optional[bool] = None
     wheelchairAccessibleRestroom: Optional[bool] = None
 
-# Main Place model
+# Photo model for place photos
+class Photo(BaseModel):
+    name: str
+    widthPx: Optional[int] = None
+    heightPx: Optional[int] = None
+    authorAttributions: Optional[List[str]] = None
+
+# Full Place model for internal processing
 class Place(BaseModel):
     internationalPhoneNumber: Optional[str] = None
     formattedAddress: Optional[str] = None
@@ -95,6 +102,8 @@ class Place(BaseModel):
     currentOpeningHours: Optional[OpeningHours] = None
     primaryType: Optional[str] = None
     priceRange: Optional[PriceRange] = None
+    photos: Optional[List[Photo]] = None
+    allowsDogs: Optional[bool] = None
     outdoorSeating: Optional[bool] = None
     liveMusic: Optional[bool] = None
     menuForChildren: Optional[bool] = None
@@ -116,3 +125,29 @@ class Place(BaseModel):
     servesBeer: Optional[bool] = None
     servesWine: Optional[bool] = None
     servesBrunch: Optional[bool] = None
+    servesVegetarianFood: Optional[bool] = None
+
+# Response model with useful Google Places API fields
+class CafeResponse(BaseModel):
+    id: str                                    
+    name: str                                  # displayName.text
+    rating: Optional[float] = None
+    address: Optional[str] = None              
+    phone: Optional[str] = None                
+    google_maps_uri: Optional[str] = None      
+    business_status: Optional[str] = None      
+    primary_type: Optional[str] = None         
+    price_range: Optional[PriceRange] = None   
+    opening_hours: Optional[OpeningHours] = None
+    photos: Optional[List[str]] = None       
+    allows_dogs: Optional[bool] = None         
+    delivery: Optional[bool] = None            
+    reservable: Optional[bool] = None          
+    serves_breakfast: Optional[bool] = None    
+    serves_lunch: Optional[bool] = None        
+    serves_dinner: Optional[bool] = None
+    serves_vegetarian_food: Optional[bool] = None       
+
+class SearchResponse(BaseModel):
+    cafes: List[CafeResponse]
+    total: int
