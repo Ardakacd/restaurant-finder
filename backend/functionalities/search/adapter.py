@@ -4,11 +4,16 @@ from .models import CafeResponse, PriceRange, OpeningHours, PriceDetail
 from fastapi import HTTPException
 import httpx
 from config import settings
-
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import desc, func, select
+from sqlalchemy.dialects.postgresql import insert
+from database.models.search_count import PlaceSearchCountModel
 logger = logging.getLogger(__name__)
 
 
 class SearchAdapter:
+    def __init__(self, session: AsyncSession):
+        self.db: AsyncSession = session
     
     async def search(self, query: str, fields: dict) -> List[CafeResponse]:
         try:
@@ -31,7 +36,6 @@ class SearchAdapter:
 
                 filtered_data = self._filter_places(data, fields)
                 
-                # Convert to CafeResponse objects
                 cafes = []
                 for place_data in filtered_data:
                     try:
@@ -40,6 +44,110 @@ class SearchAdapter:
                     except Exception as e:
                         logger.warning(f"Failed to convert place data to CafeResponse: {e}")
                         continue
+
+
+                place_ids = [cafe.id for cafe in cafes]
+                await self.add_to_place_search_count(place_ids)
+                
+                return cafes
+
+        except HTTPException as e:
+            raise
+        except Exception as e:
+            print('Error has occured')
+            print(e)
+            return []
+
+    async def add_to_place_search_count(self, place_ids: List[str]) -> bool:
+        try:
+            stmt = insert(PlaceSearchCountModel).values([
+                {"place_id": pid, "search_count": 1} for pid in place_ids
+            ])
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["place_id"],
+                set_={
+                    "search_count": PlaceSearchCountModel.search_count + 1,
+                    "last_searched": func.now()
+                }
+            )
+            await self.db.execute(stmt)
+            await self.db.commit()
+            return True
+        except Exception as e:
+            print("Error has occurred")
+            print(e)
+            return False
+
+    async def get_top_places(self, limit: int = 10):
+        try:    
+            stmt = select(PlaceSearchCountModel.place_id).order_by(desc(PlaceSearchCountModel.search_count)).limit(limit)
+            result = await self.db.execute(stmt)
+            place_ids = result.scalars().all()
+            
+            cafes = []
+            
+            for place_id in place_ids:
+                try:
+                    URL = f"https://places.googleapis.com/v1/places/{place_id}"
+                    
+                    HEADERS = {
+                        "Content-Type": "application/json",
+                        "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
+                        "X-Goog-FieldMask": "id,displayName,rating,formattedAddress,internationalPhoneNumber,googleMapsUri,businessStatus,primaryType,priceRange,currentOpeningHours,photos,allowsDogs,delivery,reservable,servesBreakfast,servesLunch,servesDinner,servesVegetarianFood"
+                    }
+                    
+                    with httpx.Client() as client:
+                        response = client.get(URL, headers=HEADERS)
+                        if response.status_code == 200:
+                            place_data = response.json()
+                            cafe = self._convert_to_cafe_response(place_data)
+                            cafes.append(cafe)
+                        else:
+                            logger.warning(f"Failed to fetch place {place_id}: {response.status_code}")
+                            
+                except Exception as e:
+                    logger.warning(f"Failed to fetch place {place_id}: {e}")
+                    continue
+            
+            return cafes
+        except Exception as e:
+            print('Error has occured')
+            print(e)
+            return []
+
+    async def get_places_by_ids(self, place_ids: List[str]):
+        try:
+            URL = "https://places.googleapis.com/v1/places:searchText"
+
+            HEADERS = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
+                "X-Goog-FieldMask": "places.id,places.internationalPhoneNumber,places.formattedAddress,places.rating,places.googleMapsUri,places.businessStatus,places.priceLevel,places.displayName,places.currentOpeningHours,places.primaryType,places.priceRange,places.photos,places.allowsDogs,places.outdoorSeating,places.liveMusic,places.menuForChildren,places.servesCocktails,places.servesDessert,places.servesCoffee,places.goodForChildren,places.restroom,places.goodForGroups,places.goodForWatchingSports,places.paymentOptions,places.accessibilityOptions,places.delivery,places.dineIn,places.reservable,places.servesBreakfast,places.servesLunch,places.servesDinner,places.servesBeer,places.servesWine,places.servesBrunch,places.servesVegetarianFood"
+            }
+
+            payload = {
+                "textQuery": query
+            }
+
+            with httpx.Client() as client:
+                response = client.post(URL, headers=HEADERS, json=payload)
+                data = response.json()
+                data = data['places']
+
+                filtered_data = self._filter_places(data, fields)
+                
+                cafes = []
+                for place_data in filtered_data:
+                    try:
+                        cafe = self._convert_to_cafe_response(place_data)
+                        cafes.append(cafe)
+                    except Exception as e:
+                        logger.warning(f"Failed to convert place data to CafeResponse: {e}")
+                        continue
+
+
+                place_ids = [cafe.id for cafe in cafes]
+                await self.add_to_place_search_count(place_ids)
                 
                 return cafes
 
@@ -252,7 +360,6 @@ class SearchAdapter:
                     name = photo_data.get("name")
                     photo_url = f"https://places.googleapis.com/v1/{name}/media?key={settings.GOOGLE_API_KEY}&maxHeightPx=600&maxWidthPx=600"
                     photos.append(photo_url)
-            print(photos)
             
             return photos if photos else None
         except Exception:

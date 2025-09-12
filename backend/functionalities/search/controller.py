@@ -27,3 +27,22 @@ async def search(query: SearchRequest, search_service: SearchService = Depends(g
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+@router.get("/top-places", response_model=SearchResponse)
+async def top_places(search_service: SearchService = Depends(get_search_service)):
+    try:
+
+        cafes = await search_service.get_top_places()
+
+        return SearchResponse(
+            cafes=cafes,
+            total=len(cafes)
+        )
+       
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
