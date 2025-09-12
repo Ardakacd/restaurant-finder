@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from functionalities.auth import router as auth_router
 from functionalities.search import router as search_router
+from functionalities.favorites import router as favorites_router
 from fastapi.exceptions import RequestValidationError
 from exceptions import auth_validation_handler
 from database import init_db
@@ -32,6 +33,7 @@ app.add_exception_handler(RequestValidationError, auth_validation_handler)
 
 app.include_router(auth_router)
 app.include_router(search_router)
+app.include_router(favorites_router)
 
 
 try:

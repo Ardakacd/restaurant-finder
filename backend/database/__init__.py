@@ -1,4 +1,6 @@
 from .models.user import UserModel
+from .models.favorite_places import FavoritePlaceModel
+from .models.search_count import PlaceSearchCountModel
 from .config import (
     get_db,
     get_db_session,
@@ -11,6 +13,8 @@ from .config import (
 
 __all__ = [
     "UserModel",
+    "FavoritePlaceModel",
+    "PlaceSearchCountModel",
     "get_db",
     "get_db_session",
     "get_async_db",

@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import select, delete, update
 import logging
 from database import UserModel
-from .models import UserCreate, UserUpdate, User
+from .models import UserCreate, UserUpdate, User    
 from fastapi import HTTPException
 logger = logging.getLogger(__name__)
 
@@ -175,14 +175,11 @@ class AuthAdapter:
             ValueError: If validation fails (email exists, password too short, etc.)
         """
         try:
-            # Build update data
             update_data = user_data.model_dump(exclude_unset=True)
             if not update_data:
                 logger.warning(f"No fields to update for user {user_id}")
                 return await self.get_user_by_id(user_id)
             
-            
-            # Direct update operation
             stmt = update(UserModel).where(UserModel.id == user_id).values(**update_data)
             result = await self.db.execute(stmt)
             
