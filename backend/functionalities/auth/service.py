@@ -111,23 +111,20 @@ class AuthService:
 
     async def refresh_token(self, refresh_request: RefreshTokenRequest):
         try:
-            # Verify the refresh token
             token_data = verify_refresh_token(refresh_request.refresh_token)
             user_id = token_data.user_id
 
-            # Check if user still exists using public user_id
             user = await self.auth_adapter.get_user_by_id(user_id)
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Kullanıcı bulunamadı"
                 )
-                # Create new access token
+
             access_token = create_access_token(
                 data={"user_id": user_id}
             )
 
-            # Create new refresh token (optional - you can reuse the old one)
             new_refresh_token = create_refresh_token(
                 data={"user_id": user_id}
             )
@@ -145,18 +142,6 @@ class AuthService:
                 detail="Sunucu hatası"
             )
 
-    async def logout(self, token: str):
-        try:
-            verify_token(token)
-            return {"message": "Kullanıcı çıkış yapıldı"}
-        except HTTPException:
-            raise
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Sunucu hatası"
-            )
-
     async def get_user(self, token: str):
         try:
             user_id = get_user_id_from_token(token)
@@ -169,7 +154,7 @@ class AuthService:
                 )
 
             return {
-                "user_id": user.user_id,  # Public UUID
+                "user_id": user.user_id,
                 "name": user.name,
                 "email": user.email
             }
@@ -194,14 +179,12 @@ class AuthService:
 
             hashed_password = get_password_hash(user.password) if user.password else existing_user.password
 
-            # Create update data
             user_data = UserUpdate(
                 name=user.name if user.name else existing_user.name,
                 email=user.email if user.email else existing_user.email,
                 password=hashed_password
             )
 
-            # Update user using internal ID
             await self.auth_adapter.update_user(existing_user.id, user_data)
 
             return {"message": "Kullanıcı güncellendi"}
@@ -224,17 +207,14 @@ class AuthService:
                     detail="Kullanıcı bulunamadı"
                 )
 
-            # Verify current password
             if not verify_password(password_request.current_password, existing_user.password):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Mevcut şifre yanlış"
                 )
 
-            # Hash new password
             hashed_new_password = get_password_hash(password_request.new_password)
 
-            # Update password
             user_data = UserUpdate(password=hashed_new_password)
             await self.auth_adapter.update_user(existing_user.id, user_data)
 
@@ -251,7 +231,6 @@ class AuthService:
         try:
             user_id = get_user_id_from_token(token)
 
-            # Delete user using internal ID
             await self.auth_adapter.delete_user(user_id)
 
             return {"message": "Kullanıcı silindi"}

@@ -91,31 +91,6 @@ async def refresh_token(refresh_request: RefreshTokenRequest, auth_service: Auth
             detail="Internal server error"
         )
 
-
-@router.post("/logout")
-async def logout(credentials: HTTPAuthorizationCredentials = Depends(security),
-                 auth_service: AuthService = Depends(get_auth_service)):
-    """
-    Logout user by invalidating the token.
-    """
-    logger.info("Logout attempt")
-    try:
-        token = credentials.credentials
-        result = await auth_service.logout(token)
-        logger.info("Logout successful")
-        return result
-
-    except HTTPException as e:
-        logger.error(f"HTTP error during logout: {e.detail}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error during logout: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
-
-
 @router.get("/me")
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security),
                            auth_service: AuthService = Depends(get_auth_service)):
