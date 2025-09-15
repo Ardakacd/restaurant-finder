@@ -29,7 +29,7 @@ class ApiService {
       async (error) => {
         const originalRequest = error.config;
 
-        console.log(originalRequest)
+        
         
         // Only attempt refresh if:
         // 1. Status is 401 (Unauthorized)
