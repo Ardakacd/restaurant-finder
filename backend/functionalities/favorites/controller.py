@@ -4,7 +4,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .service import FavoritesService, get_favorites_service
 from .models import FavoritesListResponse
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/favorites", tags=["favorites"])

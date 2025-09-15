@@ -3,7 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 
-async def auth_validation_handler(request: Request, exc: RequestValidationError):
+async def auth_validation_handler(_: Request, exc: RequestValidationError):
     """
     Handle Pydantic validation errors and return user-friendly Turkish messages
     """

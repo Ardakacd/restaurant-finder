@@ -5,7 +5,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .models import UserLogin, Token, RefreshTokenRequest, UserRegister, PasswordChangeRequest
 from .service import AuthService, get_auth_service
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])

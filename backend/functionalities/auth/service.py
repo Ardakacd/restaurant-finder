@@ -1,12 +1,11 @@
 import logging
 import uuid
-
 from .adapter import AuthAdapter
 from database.config import get_async_db
 from fastapi import Depends, HTTPException, status
 from .models import User, RefreshTokenRequest, UserRegister, UserLogin, UserUpdate, UserCreate, PasswordChangeRequest
 from sqlalchemy.ext.asyncio import AsyncSession
-from utils.jwt import create_access_token, create_refresh_token, verify_token, verify_refresh_token, get_user_id_from_token
+from utils.jwt import create_access_token, create_refresh_token, verify_refresh_token, get_user_id_from_token
 from utils.password import verify_password, get_password_hash
 
 # Configure logging

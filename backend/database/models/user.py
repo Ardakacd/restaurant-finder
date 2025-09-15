@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy import String, DateTime, CheckConstraint, Integer
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func 
 import uuid
 from .base import Base

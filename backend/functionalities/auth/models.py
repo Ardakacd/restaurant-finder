@@ -1,11 +1,10 @@
-from typing import Optional, List
-from datetime import datetime as dt
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import Optional
+from pydantic import BaseModel, EmailStr, Field
 
 
 # User Models
 class UserBase(BaseModel):
-    name: str
+    name: str = Field(..., min_length=3, description="Name must be at least 3 characters long")
     email: EmailStr
 
 class UserCreate(UserBase):

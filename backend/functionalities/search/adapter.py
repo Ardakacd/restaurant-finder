@@ -54,8 +54,7 @@ class SearchAdapter:
         except HTTPException as e:
             raise
         except Exception as e:
-            print('Error has occured')
-            print(e)
+            logger.error(f'Error has occurred: {e}')
             return []
 
     async def add_to_place_search_count(self, place_ids: List[str]) -> bool:
@@ -74,8 +73,7 @@ class SearchAdapter:
             await self.db.commit()
             return True
         except Exception as e:
-            print("Error has occurred")
-            print(e)
+            logger.error(f"Error has occurred: {e}")
             return False
 
     async def get_top_places(self, limit: int = 10):
@@ -111,8 +109,7 @@ class SearchAdapter:
             
             return cafes
         except Exception as e:
-            print('Error has occured')
-            print(e)
+            logger.error(f'Error has occurred: {e}')
             return []
 
     async def get_places_by_ids(self, place_ids: List[str]):
@@ -154,8 +151,7 @@ class SearchAdapter:
         except HTTPException as e:
             raise
         except Exception as e:
-            print('Error has occured')
-            print(e)
+            logger.error(f'Error has occurred: {e}')
             return []
 
     def _filter_places(self, places: List[dict], fields: dict) -> List[dict]:
